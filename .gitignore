@@ -1,0 +1,14 @@
+node_modules
+# Keep environment variables out of version control
+.env
+# Ignore a folder named Controller
+.Controller
+# Ignore a folder named node_models
+.node_modules
+# Ignore a folder named Public
+.Public
+# Ignore a folder named Sportify porject
+.Sportity project
+# Ignore a folder named models 
+model
+/generated/prisma
