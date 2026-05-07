@@ -1,12 +1,39 @@
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require ('@prisma/client');
+const { z } = require('z');  // create a validation schema
 
 const app = express();
 const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
+// A book must follow this rules b4 entering the database
+//z.object means "I expect an object(JSON), with specific fields inside"
+//title: z.string() -> must be string, .min(1, -> at least 1 xter long, "Title is require" -> err msg if empty) 
+// { "title": "Book Name" } valid 
+// {"title": ""} Invalid Err: "Title is required"
+//  url: z.string().url("Invalid URL") must be string & must be a valid URL format
+// {"url": "https://example.com/image.jpg"} Valid
+// {"url": "not-a-url"} Err: "Invalid URL"
+// description: z.string().min(5, "Description too short"), must be string & minimum 5 xter
+// {"description": "Bad"} Err: "Description too short"
+// PublisherId: z.number().int() Must be number, Must be an integer(no decimals)
+// .parse checks for incoming req, if valid Returns clean, validated data 
+
+/* passes validattion
+{
+"title": "My Book",
+"url": "https://picsum.photos/200",
+description: "Very nice book",
+"publisherId": 1
+}
+*/ 
+const bookSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    url: z.string().url("Invalid URL"),description: z.string().min(5, "Description too short"),
+    publisherId: z.number().int()
+});
 
 /* GET all books */
 app.get('/books', async (req, res) => {
@@ -19,6 +46,7 @@ app.get('/books', async (req, res) => {
 });
 
 /*GET Single book*/
+/*
 app.get('/books/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     try {
@@ -34,8 +62,62 @@ app.get('/books/:id', async (req, res) => {
         res.status(500).json({ error: "Error fetching book" });
     }
 });
+*/
+
+// Replace your GET/ books with this:
+// Updating the book endpoints to support Search by title, Filter by Publisher
+// https:localhost 3000:GET /books?search=first
+// GET /books?publisherId=1
+// GET /books?search=first&publisherId=1 
+app.get('/books', async (req, res) => {
+    const { search, publisherId } = req.query;
+
+    try {
+        const books = await 
+        prisma.book. findMany ({
+            where: {
+                AND: [
+                    search
+                    ? {
+                        title: {
+                            contains: search, 
+                            mode: 'insensitive'
+                        }
+                    }
+                    : {},
+                    publisherId
+                    ? {
+                        publisherId:
+            parseInt(publisherId)
+                    }
+                    : {}
+                ]
+            },
+            include: { publisher: true }
+        });
+        res.json(books);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching books" });
+    }
+});
+
+
 
 /*CREATE book*/
+app.post('/books', async (req, res) => {
+    try {
+        const validatedData = bookSchema.parse(req.body);
+        const newBook = await prisma.book.create({
+            data: validatedData
+        });
+        res.status(200).json(newBook);
+    } catch (error) {
+        res.status(500).json({ error: "Error creating book"})
+    }
+});
+
+// Replacing your post route with a validation schema 
+
 app.post('/books', async (req, res) => {
     const { title, url, description, publisherId } = req.body;
     try {
@@ -53,6 +135,7 @@ app.post('/books', async (req, res) => {
     }
 });
 
+
 /*DELET book */
 app.delete('/books/:id', async (req, res) => {
     const id = parseInt(req.params.id);
@@ -65,6 +148,8 @@ app.delete('/books/:id', async (req, res) => {
         res.status(500).json({ error: "Error deleting book" });
     }
 });
+
+
 /*PATCH = Update only what you send */
 /* PATCH /books/1 */
 app.patch('/books/:id', async (req, res) => {
@@ -95,7 +180,7 @@ PUT /books/1 {
  "description": "new desc"
  "publischerId": 2
  */
-
+// Pro tip use patch cos its safer, More flexible, Less Bugs with put it can break ur DB.
 app.put('/books/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     const { title, url, description, publisherId } = req.body;
@@ -110,7 +195,17 @@ app.put('/books/:id', async (req, res) => {
     }
 });
 
-// Updating the book endpoints to support Search by title, Filter by Publisher
+
+
+// Add Pagination
+const page = parseInt(req.query.page) || 1;
+const limit = 5;
+
+const books = await prisma.book.findMany({
+    skip: (page - 1) * limit, 
+    take: limit 
+});
+
 
 const PORT = 3000;
 app.listen(PORT, () => {
