@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require ('@prisma/client');
-const { z } = require('z');  // create a validation schema
+const { z } = require('z');  // create a validation schema, its a gatekeeper and only valid data can enter ur database
+
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -201,9 +204,46 @@ app.put('/books/:id', async (req, res) => {
 const page = parseInt(req.query.page) || 1;
 const limit = 5;
 
-const books = await prisma.book.findMany({
+/*const books = await prisma.book.findMany({
     skip: (page - 1) * limit, 
     take: limit 
+});
+
+//Create REGISTER route
+app.post('/register', async (req, res) => {
+    const { email, password, role } = req.body;
+    try {
+        // check if user exists 
+        const existingUser = await prisma.user.findUnique({
+            where: { email }
+        });
+        if (existingUser) {
+            return res.status(400).json({
+                error: "User already exists"
+            });
+        }
+        // hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // create User
+        const user = await 
+        prisma.user.create({
+            data: {
+                email,
+                password: hashedPassword,
+                role: role || "user"
+            }
+        });
+
+        res.status(201).json({
+            message: "User created",
+            user
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: "Registration failed"
+        });
+    }
 });
 
 
