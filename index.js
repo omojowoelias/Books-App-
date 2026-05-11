@@ -204,7 +204,7 @@ app.put('/books/:id', async (req, res) => {
 const page = parseInt(req.query.page) || 1;
 const limit = 5;
 
-/*const books = await prisma.book.findMany({
+const books = await prisma.book.findMany({
     skip: (page - 1) * limit, 
     take: limit 
 });
@@ -246,6 +246,48 @@ app.post('/register', async (req, res) => {
     }
 });
 
+// Login Endpoint
+
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email }
+        });
+        
+        if (!user) {
+            return res.status(401).json({
+                error: "Invalid credentials"
+            });
+        }
+
+        // compare password
+       /* const validPassword = await bcrypt.compare(
+            password,
+            user.password
+        );
+        if (!validPassword) {
+            return res.status(401).json({
+                error: "Invalid credentials"
+            });
+        }
+
+        // create token 
+        const token =jwt.sign(
+            {
+                userId: user.id,
+                role: user.role
+            },
+            "MY_SECRET_KEY",
+            { expiresIn: "1h" }
+        );
+        res.json({ token });
+    } catch (error) {
+        res.status(500).json({
+            error: "Login failed"
+        });
+    }
+});*/
 
 const PORT = 3000;
 app.listen(PORT, () => {
