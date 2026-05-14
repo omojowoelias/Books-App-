@@ -289,6 +289,87 @@ app.post('/login', async (req, res) => {
     }
 });*/
 
+// Auth Create Middleware 
+/*
+function auth(req, res, next) {
+
+    const header = req.headers.authorization;
+
+    if (!header) {
+        return res.status(401).json({
+            error: "No token provided"
+        });
+    }
+
+    const token  = header.split(" ")[1];
+    try {
+        const decoded = jwt.verify(
+            token,
+            "MY_SECRET_KEY"
+        );
+        
+        req.user = decoded;
+
+        next();
+    
+    } catch (error) {
+        res.status(401).json({
+            error: "Invalid token"
+        });
+    }
+}
+
+*/
+
+// Admin only middleware
+/*
+function adminOnly(req, res, next) {
+    if(req.user.role !== "admin") {
+        return res.status(403).json({
+            error: "Admins only"
+        });
+    }
+
+    next()
+}
+
+*/
+
+// Only logged in users (Protect routes)
+/*
+app.get('/profile', auth, (req, res) => {
+    res.json(req.user);
+})
+
+*/
+
+// Only admins can create books
+/*
+app.post('/books', auth, adminOnly, async (req, res) => {
+    const book = await prisma.book.create({
+        data: req.body
+    });
+    res.json(book);
+});
+
+*/
+
+// Only admins can delete
+
+/*
+app.delete('/books/:id', auth, adminOnly, async (req, res) => {
+    const id = parseInt(req.params.id);
+
+    await prisma.book.delete({
+        where: { id }
+    });
+
+    res.json({
+        message: "Deleted"
+    });
+});
+
+*/
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
