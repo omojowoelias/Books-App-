@@ -262,7 +262,7 @@ app.post('/login', async (req, res) => {
         }
 
         // compare password
-       /* const validPassword = await bcrypt.compare(
+        const validPassword = await bcrypt.compare(
             password,
             user.password
         );
@@ -282,7 +282,7 @@ app.post('/login', async (req, res) => {
             { expiresIn: "1h" }
         );
         res.json({ token });
-    } catch (error) {
+   /* } catch (error) {
         res.status(500).json({
             error: "Login failed"
         });
